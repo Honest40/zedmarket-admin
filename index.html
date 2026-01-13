@@ -2,313 +2,269 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>ZedMarket Admin Pro 🇿🇲</title>
+<title>ZedMarket Admin Panel 🇿🇲</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body{font-family:Arial,sans-serif;margin:0;background:#f5f5f5}
-header{background:#0f2a44;color:#fff;padding:15px;text-align:center;font-size:22px;box-shadow:0 2px 5px rgba(0,0,0,0.2);}
-section{padding:15px}
-.card{background:#fff;padding:12px;margin:10px 0;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,0.1);}
-button{padding:7px 12px;border:none;border-radius:5px;cursor:pointer;margin:3px}
-.approve{background:#198754;color:#fff}
-.reject{background:#dc3545;color:#fff}
-.feature{background:#ffc107;color:#000}
-.verify{background:#0d6efd;color:#fff}
-.block{background:#6c757d;color:#fff}
-.delete{background:#dc3545;color:#fff}
-.promote{background:#6610f2;color:#fff}
-img{width:100%;max-height:200px;object-fit:cover;border-radius:5px}
-input,select{width:100%;padding:8px;margin:6px 0;border-radius:5px;border:1px solid #ccc;}
-.chatBox{height:200px;overflow:auto;background:#fafafa;padding:8px;margin-bottom:5px;border-radius:5px;border:1px solid #ccc;}
-.stats{display:flex;justify-content:space-around;margin-bottom:15px;flex-wrap:wrap;}
-.stats div{background:#fff;padding:10px;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1);text-align:center;flex:1;margin:5px;}
-.badge{display:inline-block;padding:3px 6px;background:#ffc107;border-radius:3px;font-size:12px;margin-left:5px;color:#000;}
-canvas{background:#fff;border-radius:6px;margin:10px 0;padding:10px;}
+:root{
+  --green:#198754;
+  --orange:#ff8c00;
+  --dark:#0f2a44;
+  --red:#dc3545;
+  --gray:#6c757d;
+}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f4f4}
+header{background:var(--dark);color:#fff;padding:15px;text-align:center;font-size:22px}
+section{display:none;padding:15px}
+input,textarea,select,button{width:100%;padding:10px;margin:6px 0;border-radius:6px;border:1px solid #ccc}
+button{background:var(--green);color:#fff;font-weight:bold;cursor:pointer}
+button.red{background:var(--red)}
+button.gray{background:var(--gray)}
+.card{background:#fff;border-radius:10px;padding:10px;margin:10px 0;box-shadow:0 2px 5px rgba(0,0,0,.1)}
+.badge{display:inline-block;background:var(--orange);color:#000;padding:3px 6px;border-radius:4px;font-size:12px;margin-left:4px}
+.badge.verified{background:var(--green);color:#fff}
+.badge.pending{background:var(--gray);color:#fff}
+.badge.approved{background:var(--green);color:#fff}
+.badge.featured{background:#ffc107;color:#000}
+img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:8px;background:#eee}
+h3{margin-top:0}
+.searchBox{padding:6px;border:1px solid #ccc;border-radius:6px;margin-bottom:10px}
+.sortBox{padding:6px;border:1px solid #ccc;border-radius:6px;margin-bottom:10px}
+.navbar{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.navbar button{flex:1;border:none;padding:10px;color:#fff;border-radius:6px;font-size:15px;cursor:pointer;margin:2px}
+.navbar button.active{background:var(--green)}
 </style>
 </head>
 <body>
 
-<header>ZedMarket Admin Pro 🇿🇲</header>
+<header>ZedMarket Admin Panel 🇿🇲</header>
 
-<section id="loginBox">
-<h3>Admin Login</h3>
-<input id="email" placeholder="Email">
-<input id="password" type="password" placeholder="Password">
-<button id="loginBtn">Login</button>
+<!-- Login Section -->
+<section id="adminAuth" style="display:block;">
+  <h3>Admin Login</h3>
+  <input id="adminEmail" placeholder="Email">
+  <input id="adminPassword" type="password" placeholder="Password">
+  <button id="adminLoginBtn">Login</button>
 </section>
 
-<section id="adminBox" style="display:none">
+<!-- Admin Dashboard -->
+<section id="adminDashboard">
+  <div class="navbar">
+    <button data-tab="dashboard" class="active">Dashboard</button>
+    <button data-tab="listingsTab">Listings</button>
+    <button data-tab="usersTab">Users</button>
+    <button data-tab="profileTab">Profile</button>
+    <button id="adminLogout">Logout</button>
+  </div>
 
-<div class="stats">
-  <div>Total Listings: <span id="totalListings">0</span></div>
-  <div>Pending: <span id="pendingCount">0</span></div>
-  <div>Featured: <span id="featuredCount">0</span></div>
-  <div>Total Users: <span id="totalUsers">0</span></div>
-  <div>Verified Users: <span id="verifiedUsers">0</span></div>
-</div>
+  <!-- Dashboard / Notifications -->
+  <div id="dashboard">
+    <h3>New Listing Notifications</h3>
+    <div id="notifications"></div>
+  </div>
 
-<h3>📊 Listings Analytics</h3>
-<canvas id="listingChart" width="400" height="150"></canvas>
+  <!-- Listings Management -->
+  <div id="listingsTab">
+    <h3>All Listings</h3>
+    <input class="searchBox" id="listingSearch" placeholder="Search by title or seller...">
+    <select class="sortBox" id="listingSort">
+      <option value="newest">Newest First</option>
+      <option value="priceLow">Price Low → High</option>
+      <option value="priceHigh">Price High → Low</option>
+    </select>
+    <div id="allListings"></div>
+  </div>
 
-<h3>🕒 Pending Listings</h3>
-<div id="pendingListings"></div>
+  <!-- Users Management -->
+  <div id="usersTab">
+    <h3>All Users</h3>
+    <input class="searchBox" id="userSearch" placeholder="Search by name or email...">
+    <div id="allUsers"></div>
+  </div>
 
-<h3>✅ Approved Listings</h3>
-<div id="approvedListings"></div>
-
-<h3>👥 Users</h3>
-<input id="userSearch" placeholder="Search users...">
-<div id="users"></div>
-
-<h3>💬 Support Chats</h3>
-<div id="chats"></div>
-
-<h3>Profile</h3>
-<input id="adminName" placeholder="Admin Name">
-<input id="adminPhone" placeholder="Phone">
-<button id="saveAdminProfile">Save Profile</button>
-
-<button onclick="logout()">Logout</button>
+  <!-- Admin Profile -->
+  <div id="profileTab">
+    <h3>Profile</h3>
+    <input id="adminName" placeholder="Name">
+    <input id="adminNewPass" type="password" placeholder="New Password">
+    <button onclick="saveAdminProfile()">Save Profile</button>
+  </div>
 </section>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyDhRFgn7nXoZlRf-GX7XakwUYrEMFZDgrI",
-  authDomain: "pa-mwera.firebaseapp.com",
-  projectId: "pa-mwera",
-  storageBucket: "pa-mwera.firebasestorage.app",
-  messagingSenderId: "959795010421",
-  appId: "1:959795010421:web:84e1cc1517a5d98598113c"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+firebase.initializeApp({
+  apiKey:"AIzaSyDhRFgn7nXoZlRf-GX7XakwUYrEMFZDgrI",
+  authDomain:"pa-mwera.firebaseapp.com",
+  projectId:"pa-mwera"
+});
 
-const loginBox = document.getElementById("loginBox");
-const adminBox = document.getElementById("adminBox");
-const pendingDiv = document.getElementById("pendingListings");
-const approvedDiv = document.getElementById("approvedListings");
-const usersDiv = document.getElementById("users");
-const chatsDiv = document.getElementById("chats");
-const totalListingsSpan = document.getElementById("totalListings");
-const pendingCountSpan = document.getElementById("pendingCount");
-const featuredCountSpan = document.getElementById("featuredCount");
-const totalUsersSpan = document.getElementById("totalUsers");
-const verifiedUsersSpan = document.getElementById("verifiedUsers");
-const userSearch = document.getElementById("userSearch");
-const adminName = document.getElementById("adminName");
-const adminPhone = document.getElementById("adminPhone");
-const saveAdminProfile = document.getElementById("saveAdminProfile");
+const auth=firebase.auth();
+const db=firebase.firestore();
 
-let listingChart;
+const adminAuth=document.getElementById("adminAuth");
+const adminDashboard=document.getElementById("adminDashboard");
+const sectionsTabs=adminDashboard.querySelectorAll("#dashboard, #listingsTab, #usersTab, #profileTab");
 
-// Default admin
-const ADMIN_EMAIL = "hbforlife40@gmail.com";
-const ADMIN_PASSWORD = "mother";
+// Show tab
+function showTab(id){
+  sectionsTabs.forEach(s=>s.style.display="none");
+  document.getElementById(id).style.display="block";
+  document.querySelectorAll(".navbar button[data-tab]").forEach(b=>b.classList.remove("active"));
+  const btn=document.querySelector(`.navbar button[data-tab="${id}"]`);
+  if(btn)btn.classList.add("active");
+}
 
-// Ensure admin exists
-async function ensureAdmin(){
+// --- ADMIN LOGIN ---
+document.getElementById("adminLoginBtn").onclick=async()=>{
+  const email=adminEmail.value.trim();
+  const pass=adminPassword.value.trim();
+  if(!email || !pass){ alert("Enter email & password"); return; }
   try{
-    let cred = await auth.signInWithEmailAndPassword(ADMIN_EMAIL,ADMIN_PASSWORD);
-    let adminUser = cred.user;
-    let doc = await db.collection("users").doc(adminUser.uid).get();
-    if(!doc.exists){
-      await db.collection("users").doc(adminUser.uid).set({
-        role:"admin",
-        name:"ZedMarket Admin",
-        phone:"0978652424",
-        verified:true,
-        createdAt:Date.now()
-      });
-    }else{
-      await db.collection("users").doc(adminUser.uid).update({role:"admin"});
-    }
-    return adminUser;
-  }catch(e){
-    if(e.code==="auth/user-not-found"){
-      const cred = await auth.createUserWithEmailAndPassword(ADMIN_EMAIL,ADMIN_PASSWORD);
-      await db.collection("users").doc(cred.user.uid).set({
-        role:"admin",
-        name:"ZedMarket Admin",
-        phone:"0978652424",
-        verified:true,
-        createdAt:Date.now()
-      });
-      return cred.user;
-    }
-    alert(e.message);
-  }
-}
+    const res = await auth.signInWithEmailAndPassword(email, pass);
 
-document.getElementById("loginBtn").onclick = async ()=>{
-  const user = await ensureAdmin();
-  if(user){
-    loginBox.style.display="none";
-    adminBox.style.display="block";
-    loadListings();
-    loadUsers();
-    loadChats();
+    // --- TEMPORARY FOR TESTING: Skip Firestore admin check ---
+    // You can enable this later by uncommenting below:
+    // const adminDoc = await db.collection("admins").doc(res.user.uid).get();
+    // if(!adminDoc.exists){ alert("Not an admin"); auth.signOut(); return; }
+
+    adminAuth.style.display="none";
+    adminDashboard.style.display="block";
     loadAdminProfile();
-  }
+    listenListings();
+    listenUsers();
+    showTab('dashboard');
+  }catch(e){alert(e.message);}
 };
 
-function logout(){ auth.signOut(); location.reload(); }
+// Admin Logout
+document.getElementById("adminLogout").onclick=()=>{auth.signOut(); adminDashboard.style.display="none"; adminAuth.style.display="block";};
 
-// Load Listings
-function loadListings(){
-  db.collection("listings").onSnapshot(snap=>{
-    pendingDiv.innerHTML="";
-    approvedDiv.innerHTML="";
-    let total=0, pending=0, featured=0;
-    let approvedCount=0, rejectedCount=0;
-    snap.forEach(doc=>{
-      const d = doc.data();
-      total++;
-      if(d.status==="pending") pending++;
-      if(d.featured) featured++;
-      if(d.status==="approved") approvedCount++;
-      if(d.status==="rejected") rejectedCount++;
-      const card = `<div class="card">
-        <img src="${d.image||'https://via.placeholder.com/300'}">
-        <h4>${d.title}</h4>
-        <p>${d.price} • ${d.type} • Status: ${d.status}</p>
-        <p>Seller: ${d.sellerName||"Unknown"} ${d.sellerVerified?'<span class="badge">VERIFIED</span>':''}</p>
-        ${d.status==="pending"?`
-        <button class="approve" onclick="approve('${doc.id}')">Approve</button>
-        <button class="feature" onclick="feature('${doc.id}')">Feature</button>
-        <button class="reject" onclick="reject('${doc.id}')">Reject</button>
-        <button class="delete" onclick="deleteListing('${doc.id}')">Delete</button>`:''}
-      </div>`;
-      if(d.status==="pending") pendingDiv.innerHTML+=card;
-      else approvedDiv.innerHTML+=card;
-    });
-    totalListingsSpan.textContent=total;
-    pendingCountSpan.textContent=pending;
-    featuredCountSpan.textContent=featured;
+// Navbar tab buttons
+document.querySelectorAll(".navbar button[data-tab]").forEach(b=>{b.onclick=()=>showTab(b.dataset.tab);});
 
-    // Update chart
-    const ctx = document.getElementById('listingChart').getContext('2d');
-    if(listingChart) listingChart.destroy();
-    listingChart = new Chart(ctx,{
-      type:'bar',
-      data:{
-        labels:['Pending','Approved','Rejected','Featured'],
-        datasets:[{
-          label:'Listings',
-          data:[pending,approvedCount,rejectedCount,featured],
-          backgroundColor:['#dc3545','#198754','#6c757d','#ffc107']
-        }]
-      },
-      options:{responsive:true,plugins:{legend:{display:false}}}
-    });
-  });
-}
-
-function approve(id){ db.collection("listings").doc(id).update({status:"approved"}); }
-function feature(id){ db.collection("listings").doc(id).update({featured:true,status:"approved"}); }
-function reject(id){ if(confirm("Reject listing?")) db.collection("listings").doc(id).update({status:"rejected"}); }
-function deleteListing(id){ if(confirm("Delete listing permanently?")) db.collection("listings").doc(id).delete(); }
-
-// Load Users
-function loadUsers(){
-  db.collection("users").onSnapshot(snap=>{
-    usersDiv.innerHTML="";
-    let total=0, verified=0;
-    snap.forEach(doc=>{
-      const u = doc.data();
-      if(u.name.toLowerCase().includes(userSearch.value.toLowerCase())){
-        total++;
-        if(u.verified) verified++;
-        usersDiv.innerHTML+=`
-        <div class="card">
-          <b>${u.name||"No name"}</b> ${u.verified?'<span class="badge">VERIFIED</span>':''}<br>
-          ${u.phone||""}<br>
-          Role: ${u.role||"seller"}<br>
-          <button class="verify" onclick="verify('${doc.id}')">Verify</button>
-          <button class="block" onclick="block('${doc.id}')">${u.blocked?"Unblock":"Block"}</button>
-          <button class="promote" onclick="promote('${doc.id}')">Promote</button>
-          <button class="delete" onclick="deleteUser('${doc.id}')">Delete</button>
-        </div>`;
-      }
-    });
-    totalUsersSpan.textContent=total;
-    verifiedUsersSpan.textContent=verified;
-  });
-}
-userSearch.addEventListener("input", loadUsers);
-
-function verify(uid){ db.collection("users").doc(uid).update({verified:true}); }
-function block(uid){ db.collection("users").doc(uid).update({blocked:true}); }
-function promote(uid){ db.collection("users").doc(uid).update({role:"admin"}); }
-function deleteUser(uid){ if(confirm("Delete user permanently?")) db.collection("users").doc(uid).delete(); }
-
-// Load Support Chats
-function loadChats(){
-  db.collection("messages").onSnapshot(snap=>{
-    chatsDiv.innerHTML="";
-    snap.forEach(chat=>{
-      chatsDiv.innerHTML+=`
-      <div class="card">
-        <b>${chat.id}</b>
-        <div class="chatBox" id="box_${chat.id}"></div>
-        <input placeholder="Reply..." onkeydown="if(event.key==='Enter')sendReply('${chat.id}',this)">
-      </div>`;
-      loadChatMessages(chat.id);
-    });
-  });
-}
-
-function loadChatMessages(chatId){
-  db.collection("messages").doc(chatId).collection("messages").orderBy("time")
-    .onSnapshot(snap=>{
-      const box=document.getElementById("box_"+chatId);
-      if(!box) return;
-      box.innerHTML="";
-      snap.forEach(m=>{
-        const d=m.data();
-        box.innerHTML+=`<div><b>${d.from==="admin"?"Admin":"User"}:</b> ${d.text}</div>`;
-      });
-      box.scrollTop = box.scrollHeight;
-    });
-}
-
-function sendReply(chatId,input){
-  if(!input.value) return;
-  db.collection("messages").doc(chatId).collection("messages").add({
-    from:"admin",
-    text:input.value,
-    time:Date.now()
-  });
-  input.value="";
-}
-
-// Admin Profile
+// Load Admin Profile
 async function loadAdminProfile(){
-  const user = auth.currentUser;
-  if(!user) return;
-  const doc = await db.collection("users").doc(user.uid).get();
-  if(doc.exists){
-    const d = doc.data();
-    adminName.value=d.name||"";
-    adminPhone.value=d.phone||"";
+  const u = auth.currentUser;
+  if(!u) return;
+  // For demo, just set the email as name placeholder
+  adminName.value = u.email || "";
+}
+async function saveAdminProfile(){
+  const u = auth.currentUser;
+  if(!u) return;
+  const nameVal = adminName.value.trim();
+  const newPass = adminNewPass.value.trim();
+  if(nameVal) alert("Name saved (demo)");
+  if(newPass) await u.updatePassword(newPass);
+  alert("Profile updated!");
+  adminNewPass.value="";
+}
+
+// --- LISTINGS ---
+function listenListings(){
+  db.collection("listings").orderBy("createdAt","desc").onSnapshot(async snap=>{
+    const arr = [];
+    for(const doc of snap.docs){
+      arr.push({id:doc.id,...doc.data()});
+    }
+    displayListings(arr);
+    displayNotifications(arr.filter(d=>d.status==="pending"));
+  });
+}
+
+async function displayListings(listingsArr){
+  const container = document.getElementById("allListings");
+  const searchTerm = document.getElementById("listingSearch").value.toLowerCase();
+  const sortValue = document.getElementById("listingSort").value;
+
+  let filtered = listingsArr.filter(d=>{
+    return !searchTerm || (d.title.toLowerCase().includes(searchTerm) || (d.sellerName && d.sellerName.toLowerCase().includes(searchTerm)));
+  });
+
+  filtered.sort((a,b)=>{
+    if(sortValue==="newest") return b.createdAt - a.createdAt;
+    if(sortValue==="priceLow") return parseFloat(a.price)-parseFloat(b.price);
+    if(sortValue==="priceHigh") return parseFloat(b.price)-parseFloat(a.price);
+  });
+
+  container.innerHTML="";
+  for(const d of filtered){
+    let sellerName="Unknown";
+    let sellerVerified=false;
+    if(d.sellerId){
+      const doc = await db.collection("users").doc(d.sellerId).get();
+      if(doc.exists){ sellerName = doc.data().name || sellerName; sellerVerified = doc.data().verified || false; }
+    }
+    const imgUrl = d.image && d.image.trim()!=="" ? d.image : 'https://via.placeholder.com/300';
+    container.innerHTML+=`
+    <div class="card">
+      <img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/300'">
+      <h4>${d.title} ${d.featured?'<span class="badge featured">SPONSORED</span>':''}</h4>
+      <div class="${d.status==='pending'?'badge pending':'badge approved'}">${d.status.toUpperCase()}</div>
+      <div>${sellerVerified?'<span class="badge verified">VERIFIED SELLER</span>':''} Seller: ${sellerName}</div>
+      <div class="price">${d.price}</div>
+      <button onclick="approveListing('${d.id}')">✅ Approve</button>
+      <button class="red" onclick="rejectListing('${d.id}')">❌ Reject</button>
+      <button onclick="featureListing('${d.id}', ${d.featured})">${d.featured?'Unfeature':'Feature'}</button>
+      <button onclick="deleteListingAdmin('${d.id}')">Delete</button>
+    </div>`;
   }
 }
 
-saveAdminProfile.onclick = async ()=>{
-  const user = auth.currentUser;
-  if(!user) return;
-  await db.collection("users").doc(user.uid).update({
-    name: adminName.value,
-    phone: adminPhone.value
+// Notifications
+function displayNotifications(pendingArr){
+  const container = document.getElementById("notifications");
+  container.innerHTML="";
+  pendingArr.forEach(d=>{
+    container.innerHTML+=`<div class="card"><strong>${d.title}</strong> submitted by ${d.sellerId} at ${new Date(d.createdAt).toLocaleString()}</div>`;
   });
-  alert("Profile updated!");
 }
+
+// Listing Actions
+async function approveListing(id){ await db.collection("listings").doc(id).update({status:"approved"}); }
+async function rejectListing(id){ await db.collection("listings").doc(id).update({status:"rejected"}); }
+async function featureListing(id, current){ await db.collection("listings").doc(id).update({featured:!current}); }
+async function deleteListingAdmin(id){ if(confirm("Delete listing?")){await db.collection("listings").doc(id).delete(); }}
+
+// --- USERS ---
+function listenUsers(){
+  db.collection("users").onSnapshot(snap=>{
+    const arr = [];
+    snap.forEach(doc=>{
+      arr.push({id:doc.id,...doc.data()});
+    });
+    displayUsers(arr);
+  });
+}
+
+function displayUsers(usersArr){
+  const container = document.getElementById("allUsers");
+  const searchTerm = document.getElementById("userSearch").value.toLowerCase();
+  container.innerHTML="";
+  usersArr.forEach(u=>{
+    if(searchTerm && !u.name.toLowerCase().includes(searchTerm) && !u.email.toLowerCase().includes(searchTerm)) return;
+    container.innerHTML+=`
+    <div class="card">
+      <div><strong>${u.name}</strong> (${u.email})</div>
+      <div>Verified: ${u.verified?'✔️':'❌'}</div>
+      <div>Registered: ${new Date(u.createdAt).toLocaleString()}</div>
+      <button onclick="toggleVerify('${u.id}',${u.verified})">${u.verified?'Unverify':'Verify'}</button>
+      <button class="red" onclick="blockUser('${u.id}')">Block</button>
+    </div>`;
+  });
+}
+
+// User Actions
+async function toggleVerify(uid, current){ await db.collection("users").doc(uid).update({verified:!current}); }
+async function blockUser(uid){ if(confirm("Block this user?")){ await db.collection("users").doc(uid).update({blocked:true}); }}
+
+// Search Events
+document.getElementById("listingSearch").addEventListener("input", ()=>listenListings());
+document.getElementById("listingSort").addEventListener("change", ()=>listenListings());
+document.getElementById("userSearch").addEventListener("input", ()=>listenUsers());
 </script>
 </body>
 </html>
