@@ -2,203 +2,215 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<title>ZedMarket Admin 🇿🇲</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZedMarket Admin Pro 🇿🇲</title>
+
 <style>
-body{font-family:Arial,sans-serif;margin:0;background:#f2f2f2}
+body{font-family:Arial;margin:0;background:#f2f2f2}
 header{background:#0f2a44;color:#fff;padding:15px;text-align:center;font-size:22px}
-button{padding:6px 10px;margin:2px;border:none;border-radius:4px;cursor:pointer;color:#fff;background:#198754}
-button.reject{background:#dc3545}
-button.feature{background:#ffc107;color:#000}
-button.verify{background:#0d6efd}
 section{padding:15px}
-h3{margin-top:20px}
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{border:1px solid #ccc;padding:6px;text-align:left}
-.badge{background:#0d6efd;color:#fff;padding:2px 6px;border-radius:3px;font-size:12px}
-.notification{background:#ffc107;color:#000;padding:5px;margin-bottom:5px;border-radius:4px}
+.card{background:#fff;padding:12px;margin:10px 0;border-radius:6px}
+button{padding:7px 12px;border:none;border-radius:5px;cursor:pointer;margin:3px}
+.approve{background:#198754;color:#fff}
+.reject{background:#dc3545;color:#fff}
+.feature{background:#ffc107}
+.verify{background:#0d6efd;color:#fff}
+img{width:100%;max-height:200px;object-fit:cover;border-radius:5px}
+input{width:100%;padding:8px;margin:6px 0}
+.chatBox{height:200px;overflow:auto;background:#fafafa;padding:8px;margin-bottom:5px}
 </style>
 </head>
+
 <body>
 
-<header>ZedMarket Admin Pro 🇿🇲</header>
+<header>ZedMarket Admin Panel 🇿🇲</header>
 
-<section id="loginSection">
+<section id="loginBox">
 <h3>Admin Login</h3>
-<input id="adminEmail" placeholder="Email" value="hbforlife40@gmail.com">
-<input id="adminPassword" type="password" placeholder="Password" value="mother">
-<button id="adminLoginBtn">Login</button>
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+<button id="loginBtn">Login</button>
 </section>
 
-<section id="adminPanel" style="display:none">
-<button id="adminLogoutBtn">Logout</button>
-<div id="notifications"></div>
+<section id="adminBox" style="display:none">
 
-<h3>All Listings</h3>
-<input type="text" id="listingSearch" placeholder="Search listings by title...">
-<select id="listingFilter">
-  <option value="">All Types</option>
-  <option value="product">Product</option>
-  <option value="service">Service</option>
-</select>
-<table>
-<tr><th>Title</th><th>Seller</th><th>Status</th><th>Actions</th></tr>
-<tbody id="allListings"></tbody>
-</table>
+<h3>🕒 Pending Listings</h3>
+<div id="pendingListings"></div>
 
-<h3>All Users</h3>
-<input type="text" id="userSearch" placeholder="Search users by name...">
-<table>
-<tr><th>Name</th><th>Phone</th><th>Verified</th><th>Role</th><th>Actions</th></tr>
-<tbody id="allUsers"></tbody>
-</table>
+<h3>👥 Users</h3>
+<div id="users"></div>
+
+<h3>💬 Support Chats</h3>
+<div id="chats"></div>
+
+<button onclick="logout()">Logout</button>
 </section>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <script>
-window.addEventListener('load',()=>{
-const firebaseConfig={
-apiKey:"AIzaSyDhRFgn7nXoZlRf-GX7XakwUYrEMFZDgrI",
-authDomain:"pa-mwera.firebaseapp.com",
-databaseURL:"https://pa-mwera-default-rtdb.firebaseio.com",
-projectId:"pa-mwera",
-storageBucket:"pa-mwera.firebasestorage.app",
-messagingSenderId:"959795010421",
-appId:"1:959795010421:web:84e1cc1517a5d98598113c"
+/* Firebase Config */
+const firebaseConfig = {
+  apiKey: "AIzaSyDhRFgn7nXoZlRf-GX7XakwUYrEMFZDgrI",
+  authDomain: "pa-mwera.firebaseapp.com",
+  projectId: "pa-mwera",
+  storageBucket: "pa-mwera.firebasestorage.app",
+  messagingSenderId: "959795010421",
+  appId: "1:959795010421:web:84e1cc1517a5d98598113c"
 };
 firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth();
-const db=firebase.firestore();
 
-// DOM elements
-const loginSection=document.getElementById("loginSection");
-const adminPanel=document.getElementById("adminPanel");
-const adminEmail=document.getElementById("adminEmail");
-const adminPassword=document.getElementById("adminPassword");
-const adminLoginBtn=document.getElementById("adminLoginBtn");
-const adminLogoutBtn=document.getElementById("adminLogoutBtn");
-const notifications=document.getElementById("notifications");
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-const allListings=document.getElementById("allListings");
-const listingSearch=document.getElementById("listingSearch");
-const listingFilter=document.getElementById("listingFilter");
+const loginBox = document.getElementById("loginBox");
+const adminBox = document.getElementById("adminBox");
+const pendingDiv = document.getElementById("pendingListings");
+const usersDiv = document.getElementById("users");
+const chatsDiv = document.getElementById("chats");
 
-const allUsers=document.getElementById("allUsers");
-const userSearch=document.getElementById("userSearch");
-
-// Admin login - simplified
-adminLoginBtn.onclick=async()=>{
-try{
-const cred=await auth.signInWithEmailAndPassword(adminEmail.value,adminPassword.value);
-if(adminEmail.value!=="hbforlife40@gmail.com"){
-  alert("Not authorized!"); await auth.signOut(); return;
-}
-loginSection.style.display="none";
-adminPanel.style.display="block";
-loadListings(); loadUsers(); listenNotifications();
-}catch(e){alert("Login failed: "+e.message);}
+/* LOGIN */
+document.getElementById("loginBtn").onclick = () => {
+  auth.signInWithEmailAndPassword(
+    email.value,
+    password.value
+  ).catch(e=>alert(e.message));
 };
 
-// Admin logout
-adminLogoutBtn.onclick=async()=>{
-await auth.signOut();
-loginSection.style.display="block";
-adminPanel.style.display="none";
-};
+/* AUTH CHECK */
+auth.onAuthStateChanged(async user=>{
+  if(!user) return;
 
-// LISTINGS
-async function loadListings(){
-const snapshot=await db.collection("listings").orderBy("createdAt","desc").get();
-allListings.innerHTML="";
-snapshot.forEach(doc=>{
-const d=doc.data();
-if(d.title.toLowerCase().includes(listingSearch.value.toLowerCase()) && 
-(listingFilter.value===""||d.type===listingFilter.value)){
-allListings.innerHTML+=`<tr>
-<td>${d.title}</td>
-<td>${d.sellerId}</td>
-<td>${d.status}</td>
-<td>
-<button onclick="approveListing('${doc.id}')">Approve</button>
-<button class="reject" onclick="rejectListing('${doc.id}')">Reject</button>
-<button class="feature" onclick="featureListing('${doc.id}',${d.featured})">${d.featured?'Unfeature':'Feature'}</button>
-<button onclick="editListing('${doc.id}','${d.title}','${d.type}','${d.price}','${d.image}','${d.whatsapp}','${d.description}')">Edit</button>
-<button onclick="deleteListing('${doc.id}')">Delete</button>
-</td>
-</tr>`;
-}
+  const snap = await db.collection("users").doc(user.uid).get();
+  if(!snap.exists || snap.data().role!=="admin"){
+    alert("Not an admin");
+    auth.signOut();
+    return;
+  }
+
+  loginBox.style.display="none";
+  adminBox.style.display="block";
+  loadPending();
+  loadUsers();
+  loadChats();
 });
-}
-listingSearch.addEventListener("input",loadListings);
-listingFilter.addEventListener("change",loadListings);
 
-window.approveListing=async(id)=>{await db.collection("listings").doc(id).update({status:"approved"});loadListings();}
-window.rejectListing=async(id)=>{await db.collection("listings").doc(id).update({status:"rejected"});loadListings();}
-window.featureListing=async(id,featured)=>{await db.collection("listings").doc(id).update({featured:!featured});loadListings();}
-window.deleteListing=async(id)=>{if(confirm("Delete this listing?")){await db.collection("listings").doc(id).delete();loadListings();}}
-
-// EDIT listing
-window.editListing=async(id,t,type,price,img,wa,desc)=>{
-const newTitle=prompt("Edit title",t);
-if(newTitle===null) return;
-await db.collection("listings").doc(id).update({title:newTitle,type:type,price:price,image:img,whatsapp:wa,description:desc,status:"pending"});
-loadListings();
-alert("Listing updated and pending approval!");
+function logout(){
+  auth.signOut();
+  location.reload();
 }
 
-// USERS
-async function loadUsers(){
-const snapshot=await db.collection("users").get();
-allUsers.innerHTML="";
-snapshot.forEach(doc=>{
-const d=doc.data();
-if(d.name.toLowerCase().includes(userSearch.value.toLowerCase())){
-allUsers.innerHTML+=`<tr>
-<td>${d.name||"N/A"}</td>
-<td>${d.phone||"N/A"}</td>
-<td>${d.isVerified?'<span class="badge">Verified</span>':'No'}</td>
-<td>${d.role||"user"}</td>
-<td>
-<button class="verify" onclick="verifyUser('${doc.id}',${d.isVerified})">${d.isVerified?'Unverify':'Verify'}</button>
-<button onclick="deleteUser('${doc.id}')">Delete</button>
-</td>
-</tr>`;
-}
-});
-}
-userSearch.addEventListener("input",loadUsers);
-
-window.verifyUser=async(id,isVerified)=>{await db.collection("users").doc(id).update({isVerified:!isVerified});loadUsers();}
-window.deleteUser=async(id)=>{if(confirm("Delete this user?")){await db.collection("users").doc(id).delete();loadUsers();}}
-
-// Notifications
-function listenNotifications(){
-db.collection("listings").where("status","==","pending")
-.onSnapshot(snapshot=>{
-snapshot.docChanges().forEach(change=>{
-if(change.type==="added"){const d=change.doc.data();showNotification(`New listing submitted: ${d.title}`);}
-});
-});
-db.collection("users")
-.onSnapshot(snapshot=>{
-snapshot.docChanges().forEach(change=>{
-if(change.type==="added"){const d=change.doc.data();showNotification(`New user registered: ${d.name||d.phone}`);}
-});
-});
+/* LISTINGS */
+function loadPending(){
+  db.collection("listings")
+    .where("status","in",["pending","pending_payment"])
+    .onSnapshot(snap=>{
+      pendingDiv.innerHTML="";
+      snap.forEach(doc=>{
+        const d=doc.data();
+        pendingDiv.innerHTML+=`
+        <div class="card">
+          <img src="${d.image || 'https://via.placeholder.com/300'}">
+          <h4>${d.title}</h4>
+          <p>${d.price} • ${d.type}</p>
+          <button class="approve" onclick="approve('${doc.id}')">Approve</button>
+          <button class="feature" onclick="feature('${doc.id}')">Feature</button>
+          <button class="reject" onclick="reject('${doc.id}')">Reject</button>
+        </div>`;
+      });
+    });
 }
 
-function showNotification(msg){
-const n=document.createElement("div");
-n.className="notification";
-n.textContent=msg;
-notifications.prepend(n);
-setTimeout(()=>n.remove(),7000);
+function approve(id){
+  db.collection("listings").doc(id).update({status:"approved"});
 }
 
-});
+function feature(id){
+  db.collection("listings").doc(id).update({
+    featured:true,
+    status:"approved"
+  });
+}
+
+function reject(id){
+  if(confirm("Delete listing?")){
+    db.collection("listings").doc(id).delete();
+  }
+}
+
+/* USERS */
+function loadUsers(){
+  db.collection("users").onSnapshot(snap=>{
+    usersDiv.innerHTML="";
+    snap.forEach(doc=>{
+      const u=doc.data();
+      usersDiv.innerHTML+=`
+      <div class="card">
+        <b>${u.name||"No name"}</b><br>
+        ${u.phone||""}<br>
+        Role: ${u.role||"seller"}<br>
+        Verified: ${u.verified?"✅":"❌"}<br>
+        <button class="verify" onclick="verify('${doc.id}')">Verify</button>
+      </div>`;
+    });
+  });
+}
+
+function verify(uid){
+  db.collection("users").doc(uid).update({verified:true});
+}
+
+/* SUPPORT CHAT */
+function loadChats(){
+  db.collection("messages").onSnapshot(snap=>{
+    chatsDiv.innerHTML="";
+    snap.forEach(chat=>{
+      chatsDiv.innerHTML+=`
+      <div class="card">
+        <b>${chat.id}</b>
+        <div class="chatBox" id="box_${chat.id}"></div>
+        <input placeholder="Reply..." 
+          onkeydown="if(event.key==='Enter')sendReply('${chat.id}',this)">
+      </div>`;
+      loadChatMessages(chat.id);
+    });
+  });
+}
+
+function loadChatMessages(chatId){
+  db.collection("messages")
+    .doc(chatId)
+    .collection("messages")
+    .orderBy("time")
+    .onSnapshot(snap=>{
+      const box=document.getElementById("box_"+chatId);
+      if(!box) return;
+      box.innerHTML="";
+      snap.forEach(m=>{
+        const d=m.data();
+        box.innerHTML+=`
+          <div><b>${d.from==="admin"?"Admin":"User"}:</b> ${d.text}</div>`;
+      });
+      box.scrollTop=box.scrollHeight;
+    });
+}
+
+function sendReply(chatId,input){
+  if(!input.value) return;
+  db.collection("messages")
+    .doc(chatId)
+    .collection("messages")
+    .add({
+      from:"admin",
+      text:input.value,
+      time:Date.now()
+    });
+  input.value="";
+}
 </script>
+
 </body>
 </html>
